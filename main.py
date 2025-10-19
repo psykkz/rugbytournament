@@ -131,16 +131,24 @@ HTML_TEMPLATE = '''
         .matches-section {
             margin-top: 30px;
         }
-        .terrain {
+        .tour {
             background: white;
             border: 2px solid #4a7c2e;
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 20px;
         }
-        .terrain h4 {
+        .tour h4 {
             color: #2d5016;
             margin-bottom: 10px;
+        }
+        .tour-repos {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 5px;
+            font-style: italic;
+            color: #856404;
         }
         .match {
             background: #e8f5e9;
@@ -421,25 +429,17 @@ HTML_TEMPLATE = '''
             })
             .then(function(response) { return response.json(); })
             .then(function(data) {
-                afficherMatchs(data.terrains);
+                afficherMatchs(data.planning);
                 calculerClassements();
             })
             .catch(function(error) { console.error('Erreur:', error); });
         }
         
-        function afficherMatchs(terrains) {
+        function afficherMatchs(planning) {
             var section = document.getElementById('matches-section');
             var container = document.getElementById('matchesContainer');
             
-            var hasMatchs = false;
-            for (var i = 0; i < terrains.length; i++) {
-                if (terrains[i].length > 0) {
-                    hasMatchs = true;
-                    break;
-                }
-            }
-            
-            if (!hasMatchs) {
+            if (!planning || planning.length === 0) {
                 section.classList.add('hidden');
                 document.getElementById('exportBtn').classList.add('hidden');
                 return;
@@ -449,18 +449,18 @@ HTML_TEMPLATE = '''
             document.getElementById('exportBtn').classList.remove('hidden');
             
             var html = '';
-            for (var i = 0; i < terrains.length; i++) {
-                var terrain = terrains[i];
-                html += '<div class="terrain">';
-                html += '<h4>Terrain ' + (i + 1) + '</h4>';
+            for (var i = 0; i < planning.length; i++) {
+                var tour = planning[i];
+                html += '<div class="tour">';
+                html += '<h4>Tour ' + tour.tour + '</h4>';
                 
-                for (var j = 0; j < terrain.length; j++) {
-                    var match = terrain[j];
-                    var matchId = 'match_' + i + '_' + j;
+                for (var j = 0; j < tour.matches.length; j++) {
+                    var match = tour.matches[j];
+                    var matchId = 'match_' + tour.tour + '_' + j;
                     
                     if (match === null || match === undefined) {
                         html += '<div class="match" style="opacity: 0.5; font-style: italic;">';
-                        html += '<span class="match-number">Match ' + (j + 1) + ':</span> Pas de match';
+                        html += '<span class="match-number">Terrain ' + (j + 1) + ':</span> Pas de match';
                         html += '</div>';
                     } else {
                         var isCompleted = matchsData[matchId] && matchsData[matchId].completed;
@@ -468,7 +468,7 @@ HTML_TEMPLATE = '''
                         
                         html += '<div class="' + matchClass + '" id="' + matchId + '">';
                         html += '<div class="match-header">';
-                        html += '<span class="match-number">Match ' + (j + 1) + ':</span>';
+                        html += '<span class="match-number">Terrain ' + (j + 1) + ':</span>';
                         html += '<span class="match-teams">' + match.equipe1 + ' vs ' + match.equipe2 + '</span>';
                         html += '<span style="color: #888; font-size: 12px;">(' + match.poule + ')</span>';
                         html += '<input type="checkbox" class="match-checkbox" data-matchid="' + matchId + '" ' + (isCompleted ? 'checked' : '') + '>';
@@ -484,6 +484,14 @@ HTML_TEMPLATE = '''
                         html += '</div>';
                     }
                 }
+                
+                // Afficher les équipes au repos
+                if (tour.repos && tour.repos.length > 0) {
+                    html += '<div class="tour-repos">';
+                    html += '🪑 Équipes au repos : <strong>' + tour.repos.join(', ') + '</strong>';
+                    html += '</div>';
+                }
+                
                 html += '</div>';
             }
             container.innerHTML = html;
